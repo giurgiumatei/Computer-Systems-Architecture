@@ -1,0 +1,56 @@
+bits 32 
+
+global start        
+
+
+extern exit               
+import exit msvcrt.dll    
+    
+
+
+segment data use32 class=data
+ 
+ a db 1
+ b dw 2
+ c dd 150
+ d dq 20
+ 
+
+
+ 
+
+
+segment code use32 class=code
+
+start   
+
+;(c-a-d)+(c-b)-a = 276
+
+mov al,[a]; AL=a
+cbw; a->word
+cwd; a->dword
+cdq; a->qword
+mov EDX:EBX,EDX:EAX; EDX:EBX=a
+mov al,[c] ;AL=c
+cbw; c->word
+cwd; c->dword
+cdq; c->qword
+mov EDX:ECX,EDX:EAX; EDX:ECX=c ?era acelasi lucru daca scriam mov EDX:ECX,c?
+sub EDX:ECX,EDX:EBX ;EDX:ECX=c-a
+sub EDX:ECX,d; EDX:ECX=c-a-d
+mov al,[b]; BL=a
+cbw; b->word
+cwd; b->dword
+cdq; b->qword
+mov EDX:EBX,c
+sub EDX:EBX,EDX:EAX; EDX:EAX=c-b
+add EDX:ECX,EDX:EBX; EDX:ECX= c-a-d + c-b
+sub EDX:ECX,[a]
+
+
+
+
+
+
+push    dword 0      
+call    [exit]       
