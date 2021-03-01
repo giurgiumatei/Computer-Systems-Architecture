@@ -1,0 +1,131 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit 
+     8                                  extern fscanf
+     9                                  extern fopen
+    10                                  extern fclose
+    11                                  extern fprintf
+    12                                               
+    13                                  import exit msvcrt.dll   
+    14                                  import fscanf msvcrt.dll
+    15                                  import fopen msvcrt.dll
+    16                                  import fclose msvcrt.dll
+    17                                  import fprintf msvcrt.dll 
+    18                                                            
+    19                                  
+    20                                  ; our data is declared here (the variables needed by our program)
+    21                                  segment data use32 class=data
+    22                                  
+    23                                  
+    24                                  
+    25 00000000 00000000                n dd 0
+    26 00000004 00000000                counter1 dd 0
+    27 00000008 01000000                counter2 dd 1
+    28 0000000C 616263646566676869-     sir db 'a','b','c','d','e','f','g','h','i','j'
+    28 00000015 6A                 
+    29 00000016 7200000000000000        modread dd 'r',0
+    30 0000001E 6100000000000000        modwrite dd 'a',0
+    31 00000026 2564000000000000        readformat dd '%d',0
+    32 0000002E 2563000000000000        writeformat dd '%c',0
+    33 00000036 696E7075742E747874-     input_file dd 'input.txt',0
+    33 0000003F 00000000000000     
+    34 00000046 FFFFFFFF                handle dd -1
+    35 0000004A FFFFFFFF                handle1 dd -1
+    36 0000004E 6F75747075742D692E-     output_file db 'output-i.txt'
+    36 00000057 747874             
+    37 0000005A 30                      counter db '0'
+    38                                  misc resd 0
+    39 0000005B 2E747874                dot_txt db '.txt'
+    40                                  
+    41                                      ; ...
+    42                                  
+    43                                  ; our code starts here
+    44                                  segment code use32 class=code
+    45                                      start:
+    46                                          
+    47 00000000 68[16000000]                    push dword  modread
+    48 00000005 68[36000000]                    push dword input_file
+    49 0000000A FF15[00000000]                  call [fopen] ;open input file
+    50                                          
+    51 00000010 83C408                          add esp,4*2
+    52                                          
+    53 00000013 83F800                          cmp eax,dword 0
+    54 00000016 0F84C9000000                    je final
+    55                                          
+    56 0000001C A3[46000000]                    mov [handle],eax ;handle=input file
+    57                                          
+    58 00000021 68[00000000]                    push dword n
+    59 00000026 68[26000000]                    push dword readformat
+    60 0000002B FF35[46000000]                  push dword [handle]
+    61 00000031 FF15[00000000]                  call [fscanf]
+    62 00000037 83C40C                          add esp,4*3 ;read the number n from input file
+    63                                          
+    64 0000003A BB00000000                      mov ebx,0
+    65 0000003F 8B1D[00000000]                  mov ebx,[n];ebx=n
+    66                                          
+    67 00000045 BE[4E000000]                    mov esi,output_file
+    68 0000004A 83C607                          add esi,7 ; esi= the position of i
+    69                                          
+    70                                          repeat:
+    71 0000004D C705[04000000]0000-                 mov [counter1],dword 0 ;this counter shows how many characters to be written in this iteration
+    71 00000055 0000               
+    72 00000057 8B15[5A000000]                      mov edx,[counter]; counts the  number i in the file name
+    73 0000005D 8916                                mov [esi],edx
+    74 0000005F 83C601                              add esi,1
+    75 00000062 8B15[5B000000]                      mov edx,[dot_txt]
+    76 00000068 8916                                mov [esi],edx
+    77 0000006A 83EE01                              sub esi,1;now the file has the right name
+    78                                          
+    79 0000006D 68[1E000000]                        push dword modwrite
+    80 00000072 68[4E000000]                        push dword output_file
+    81 00000077 FF15[00000000]                      call [fopen]
+    82 0000007D 83C408                              add esp,4*2;create and open a new file
+    83                                              
+    84 00000080 83F800                              cmp eax,dword 0
+    85 00000083 7460                                je final
+    86                                              
+    87 00000085 A3[4A000000]                        mov [handle1],eax; handle1 is the output file
+    88                                              
+    89                                              
+    90                                              
+    91 0000008A FE05[5A000000]                      inc byte [counter]
+    92                                              
+    93 00000090 BF[0C000000]                        mov edi,sir
+    94 00000095 83EF01                              sub edi,1
+    95                                              repeat1:
+    96 00000098 83C701                                  add edi,1;shows which character must be written
+    97                                              
+    98 0000009B FF37                                    push dword [edi]
+    99 0000009D 68[2E000000]                            push dword writeformat
+   100 000000A2 FF35[4A000000]                          push dword [handle1]
+   101 000000A8 FF15[00000000]                          call [fprintf]
+   102 000000AE 83C40C                                  add esp,4*3;prints a character
+   103                                                  
+   104 000000B1 FF05[04000000]                          inc dword [counter1]
+   105 000000B7 A1[08000000]                            mov eax,[counter2]
+   106                                                 ; sub edi,[counter1]
+   107 000000BC 3B05[04000000]                          cmp eax,[counter1];checks if the number of characters required was written
+   108 000000C2 75D4                                    jne repeat1
+   109                                                  
+   110 000000C4 FF05[08000000]                      inc dword [counter2];increases the number of characters that need to be written
+   111 000000CA FF35[46000000]                      push dword [handle];close the file
+   112 000000D0 FF15[00000000]                      call [fclose]
+   113 000000D6 83C404                              add esp,4*1
+   114                                              
+   115 000000D9 83EB01                              sub ebx, byte 1
+   116 000000DC 83FB00                              cmp ebx,0
+   117 000000DF 0F8568FFFFFF                        jne repeat;decrease ebx (n)
+   118                                          
+   119                                          
+   120                                          
+   121                                          
+   122                                          
+   123                                          
+   124                                      final:
+   125 000000E5 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   126 000000E7 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
+   127                                  

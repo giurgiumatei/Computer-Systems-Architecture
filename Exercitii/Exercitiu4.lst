@@ -1,0 +1,115 @@
+     1                                  ;se da in segmentul de date un numar, un sir de numere pozitive si un nume de fisier. Sa se creeze fisierul cu acel nume. Sa se scrie in fisier numerele din sirul dat care apar exact de n ori.
+     2                                  
+     3                                  
+     4                                  
+     5                                  bits 32 ; assembling for the 32 bits architecture
+     6                                  
+     7                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     8                                  global start        
+     9                                  
+    10                                  ; declare external functions needed by our program
+    11                                  extern exit               
+    12                                  extern fopen
+    13                                  extern fprintf
+    14                                  extern fclose 
+    15                                  import exit msvcrt.dll    
+    16                                  import fopen msvcrt.dll
+    17                                  import fclose msvcrt.dll    
+    18                                  import fprintf msvcrt.dll          
+    19                                  
+    20                                  ; our data is declared here (the variables needed by our program)
+    21                                  segment data use32 class=data
+    22                                      space equ ' '
+    23                                      dot equ '.'
+    24 00000000 0200                        n dw 2
+    25 00000002 0A0203020A0A0505            sir db 10,2,3,2,10,10,5,5
+    26 0000000A 00                          endsir db 0
+    27 0000000B 7200000000000000            modread dd 'r',0
+    28 00000013 6100000000000000            modwrite dd 'a',0
+    29 0000001B 657865726369746975-         file dd 'exercitiu4.txt',0
+    29 00000024 342E74787400000000-
+    29 0000002D 0000               
+    30 0000002F FFFFFFFF                    handle dd -1
+    31 00000033 2564200000000000            printformat dd '%d ',0
+    32 0000003B 01                          cont db 1
+    33                                      
+    34                                  
+    35                                  ; our code starts here
+    36                                  segment code use32 class=code
+    37                                      start:
+    38 00000000 68[13000000]                    push dword modwrite
+    39 00000005 68[1B000000]                    push dword file
+    40 0000000A FF15[00000000]                  call [fopen]
+    41 00000010 83C408                          add esp,4*2
+    42                                          
+    43 00000013 83F800                          cmp eax,0
+    44 00000016 0F8482000000                    je ext
+    45                                          
+    46 0000001C A3[2F000000]                    mov [handle],eax
+    47                                          
+    48 00000021 BE[02000000]                    mov esi,sir
+    49                                          
+    50                                          repeat:
+    51                                              
+    52                                              
+    53 00000026 C605[3B000000]01                    mov [cont],byte 1
+    54 0000002D BA00000000                          mov edx,0
+    55 00000032 8A16                                mov dl,[esi]
+    56 00000034 80FAFF                              cmp dl,-1
+    57 00000037 74ED                                je repeat
+    58 00000039 89F7                                mov edi,esi
+    59 0000003B B9[0A000000]                        mov ecx,endsir
+    60                                              
+    61 00000040 39CF                                cmp edi,ecx
+    62 00000042 741D                                je back1
+    63                                              repeat1:
+    64                                              
+    65 00000044 47                                      inc edi
+    66 00000045 3A17                                    cmp dl,[edi]
+    67 00000047 7424                                    je increment
+    68                                                  back:
+    69 00000049 39CF                                    cmp edi,ecx
+    70 0000004B 75F7                                    jne repeat1
+    71                                                  
+    72 0000004D B900000000                          mov ecx,0
+    73 00000052 8A0D[3B000000]                      mov cl,[cont]
+    74 00000058 663B0D[00000000]                    cmp cx,[n]
+    75 0000005F 7417                                je scriere
+    76                                              back1:
+    77 00000061 46                                  inc esi
+    78 00000062 B9[0A000000]                        mov ecx,endsir
+    79 00000067 39CE                                cmp esi,ecx
+    80 00000069 75BB                                jne repeat
+    81                                                  
+    82                                              
+    83                                              
+    84                                              
+    85 0000006B EB22                            jmp final    
+    86                                              
+    87                                              
+    88                                          increment:
+    89 0000006D FE05[3B000000]                      inc byte [cont]
+    90 00000073 C606FF                              mov [esi],byte -1
+    91 00000076 EBD1                                jmp back
+    92                                              
+    93                                          scriere:
+    94 00000078 52                                  push dword edx
+    95 00000079 68[33000000]                        push dword printformat
+    96 0000007E FF35[2F000000]                      push dword [handle]
+    97 00000084 FF15[00000000]                      call [fprintf]
+    98 0000008A 83C40C                              add esp,4*3
+    99 0000008D EBD2                                jmp back1
+   100                                              
+   101                                              
+   102                                          final:
+   103                                          
+   104 0000008F FF35[2F000000]                      push dword [handle]
+   105 00000095 FF15[00000000]                      call [fclose]
+   106 0000009B 83C404                              add esp,4*1
+   107                                              
+   108                                          
+   109                                          
+   110                                          ext:
+   111                                          
+   112 0000009E 6A00                                push    dword 0      ; push the parameter for exit onto the stack
+   113 000000A0 FF15[00000000]                      call    [exit]       ; call exit to terminate the program
